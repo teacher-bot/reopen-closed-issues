@@ -12,7 +12,7 @@
     "dev": "LOG_LEVEL=trace npm start"
   },
   "dependencies": {
-    "probot": "^1.1.0"
+    "probot": "^4.0.0"
   },
   "devDependencies": {
     "localtunnel": "^1.8.2",
