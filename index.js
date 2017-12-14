@@ -1,5 +1,6 @@
 const defaultsShape = {
-  message: 'string'
+  message: 'string',
+  whitelistedTeamID: 'number'
 };
 
 function checkForDefaults(defaults) {
@@ -16,7 +17,7 @@ function checkForDefaults(defaults) {
  * @param {Config} defaults
  * @param {String} [configFilename]
  */
-module.exports = (robot, defaults = {message: "Uh oh! You closed an issue or pull request that you didn't author. Please leave these open for the original author so that they may get the benefit of completing the learning process on their own. Thanks :v:"}, configFilename = 'reopen-closed-issues.yml') => {
+module.exports = (robot, defaults = {message: "Uh oh! You closed an issue or pull request that you didn't author. Please leave these open for the original author so that they may get the benefit of completing the learning process on their own. Thanks :v:", "whitelistedTeamID" : 239461}, configFilename = 'reopen-closed-issues.yml') => {
   checkForDefaults(defaults);
 
   robot.on('issues.closed', checkReopen)
@@ -34,20 +35,33 @@ module.exports = (robot, defaults = {message: "Uh oh! You closed an issue or pul
       config = defaults;
     }
 
-    if( closer != author )
-    {
-      context.github.issues.createComment(context.repo({
-        number: issue.number,
-        body: config.message
-      }));
-      return context.github.issues.edit(context.repo({
-        number: issue.number,
-        state: "open",
-      }));
+    try {
+      await context.github.orgs.getTeamMembership( context.repo ({
+        id: config.whitelistedTeamID,
+        username: closer
+      }))
+      robot.log(`${closer} is a team member`)
+    } catch (err) {
+      robot.log(`${closer} is NOT a team member`)
+
+      if( closer != author )
+      {
+        context.github.issues.createComment(context.repo({
+          number: issue.number,
+          body: config.message
+        }));
+        return context.github.issues.edit(context.repo({
+          number: issue.number,
+          state: "open",
+        }));
+      }
+      else {
+        return;
+      }
+
     }
-    else {
-      return;
-    }
+
+
 
   }
 
